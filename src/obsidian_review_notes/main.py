@@ -7,8 +7,9 @@ import typing
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-
+import importlib.resources
 import attrs
+import jinja2
 import pydriller
 
 
@@ -66,11 +67,17 @@ def was_changed(
 
 
 def main():
+    links = []
     vault = Vault.open(Path(r"C:\Users\tamir\OneDrive\Documents\Obsidian Vault"))
     for note in vault.notes:
-        if was_changed(str(vault.root), str(note), datetime.now() - timedelta(days=50)):
-            print(vault.get_link(note))
+        if was_changed(str(vault.root), str(note), datetime.now() - timedelta(days=7)):
+            links.append(vault.get_link(note))
 
+    env = jinja2.Environment(
+        loader=jinja2.PackageLoader("obsidian_review_notes","templates"),
+    )
+    template = env.get_template("review.md")
+    print(template.render(links=links))
 
 
 if __name__ == "__main__":
