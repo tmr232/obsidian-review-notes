@@ -1,4 +1,4 @@
-from typing import NewType, Generator
+from typing import Generator, NewType
 
 import attrs
 import git
@@ -9,13 +9,17 @@ import rich
 class File:
     name: str
 
+
 @attrs.frozen
 class Deleted:
     name: str
 
+
 @attrs.frozen
 class Added:
     name: str
+
+
 @attrs.frozen
 class Modified:
     name: str
@@ -30,8 +34,8 @@ class Renamed:
 Command = NewType("Command", Deleted | Added | Modified | Renamed)
 
 
-def diffs_to_commands(diffs:list[git.Diff])->list[Command]:
-    def _convert()->Generator[Command, None, None]:
+def diffs_to_commands(diffs: list[git.Diff]) -> list[Command]:
+    def _convert() -> Generator[Command, None, None]:
         for diff in diffs:
             match diff.change_type:
                 case "A":
@@ -46,6 +50,7 @@ def diffs_to_commands(diffs:list[git.Diff])->list[Command]:
                     raise RuntimeError(diff.change_type)
 
     return list(_convert())
+
 
 def collect(files: set[File], command: Command):
     new_files = files.copy()
@@ -67,6 +72,7 @@ def collect(files: set[File], command: Command):
 
     return new_files
 
+
 def track(files: set[File], command: Command):
     new_files = files.copy()
     match command:
@@ -81,12 +87,13 @@ def track(files: set[File], command: Command):
 
     return new_files
 
+
 def main():
     files = set()
     collect_commands = [
-        Renamed("a","b"),
+        Renamed("a", "b"),
         Added("a"),
-        ]
+    ]
     track_commands = [
         Modified("b"),
         Deleted("b"),
@@ -100,6 +107,7 @@ def main():
     for command in track_commands:
         files = track(files, command)
         rich.print(files)
+
 
 if __name__ == "__main__":
     main()
