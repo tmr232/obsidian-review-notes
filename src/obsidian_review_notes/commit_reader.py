@@ -33,21 +33,28 @@ def collect_modified(repo: git.Repo, since: str, until: str):
     return files
 
 
-def is_note(name: str) -> bool:
-    if Path(name).is_relative_to(Path(".obsidian")):
-        return False
-
-    return name.endswith(".md")
-
-
 # TODO: Make configurable!
 EXCLUDED_NOTES = {"Excalibrain/excalibrain.md"}
+EXCLUDED_DIRS = {".obsidian", "Excalibrain", "Excalidraw/scripts"}
+
+
+def is_note(name: str) -> bool:
+    if not name.endswith(".md"):
+        return False
+
+    if name in EXCLUDED_NOTES:
+        return False
+
+    for excluded_dir in EXCLUDED_DIRS:
+        if Path(name).is_relative_to(Path(excluded_dir)):
+            return False
+
+    return True
 
 
 def links_for_review(root: Path, since: str, until: str) -> list[str]:
     vault = Vault.open(root)
     modified_files = collect_modified(git.Repo(root), since=since, until=until)
     modified_notes = set(filter(is_note, modified_files))
-    modified_notes -= EXCLUDED_NOTES
     links = [vault.get_link(Path(note)) for note in modified_notes]
     return links
