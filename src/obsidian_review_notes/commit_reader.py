@@ -1,9 +1,12 @@
+from pathlib import Path
+
 import pygit2
 from pygit2 import Repository
 import rich
 import git
 
 from obsidian_review_notes.commit_tracker import diffs_to_commands, track, collect
+from obsidian_review_notes.main import Vault
 
 REPO_PATH = r"c:\Temp\git-rename-test"
 
@@ -27,7 +30,7 @@ def get_diffs(repo:git.Repo, **kwargs:str)->list[git.Diff]:
     return diffs[::-1]
 
 
-def collect_for_review(repo:git.Repo, since:str, until:str):
+def collect_modified(repo:git.Repo, since:str, until:str):
     collect_diffs = get_diffs(repo, since=since, until=until)
     track_diffs = get_diffs(repo, since=until)
     collect_commands = diffs_to_commands(collect_diffs)
@@ -43,22 +46,23 @@ def collect_for_review(repo:git.Repo, since:str, until:str):
     return files
 
 
+def is_note(name:str)->bool:
+    if Path(name).is_relative_to(Path(".obsidian")):
+        return False
+
+    return name.endswith(".md")
+
+def links_for_review(root:Path, since:str, until:str)->list[str]:
+    vault = Vault.open(root)
+    modified_files = collect_modified(git.Repo(root), since=since, until=until)
+    modified_notes = list(filter(is_note, modified_files))
+    links = [vault.get_link(Path(note)) for note in modified_notes]
+    return links
+
+
 def main():
-    repo = git.Repo(REPO_PATH)
-    # for commit in repo.iter_commits(since="2023-04-30T14:45"):
-    #     prev = repo.commit(f"{commit.hexsha}~1")
-    #     rich.print(prev.diff(commit))
-    #     rich.print(commit.committed_datetime)
-    # for diff in repo.head.commit.diff("HEAD~1"):
-    #     rich.print(diff)
-    #
-    #
-    # for cmd in diffs_to_commands(get_diffs(repo, since="2023-04-30T14:45")):
-    #     rich.print(cmd)
 
-    rich.print(collect_for_review(repo, since="2023-04-30T14:45", until="2023-04-30T14:47"))
-
-    rich.print(collect_for_review(git.Repo(r"C:\Users\tamir\OneDrive\Documents\Obsidian Vault"), since="2023-04-10", until="2023-04-20"))
+    rich.print(links_for_review(Path(r"C:\Users\tamir\OneDrive\Documents\Obsidian Vault"), since="2023-04-10", until="2023-04-20"))
 
 
 if __name__ == "__main__":
