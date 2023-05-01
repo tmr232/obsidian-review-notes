@@ -7,12 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydriller = "^2.4.1"
 jinja2 = "^3.1.2"
 typer = "^0.7.0"
-rich = "^13.3.5"
 attrs = "^23.1.0"
-pygit2 = "^1.12.0"
+gitpython = "^3.1.31"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -28,3 +26,9 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 review = 'obsidian_review_notes.main:main'
+
+[tool.isort]
+line_length = 88
+
+[tool.black]
+line-length = 88

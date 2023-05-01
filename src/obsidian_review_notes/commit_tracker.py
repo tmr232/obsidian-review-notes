@@ -1,13 +1,7 @@
-from typing import Generator, NewType
+from typing import Generator, cast
 
 import attrs
 import git
-import rich
-
-
-@attrs.frozen
-class File:
-    name: str
 
 
 @attrs.frozen
@@ -31,7 +25,7 @@ class Renamed:
     new: str
 
 
-Command = NewType("Command", Deleted | Added | Modified | Renamed)
+Command = Deleted | Added | Modified | Renamed
 
 
 def diffs_to_commands(diffs: list[git.Diff]) -> list[Command]:
@@ -39,20 +33,22 @@ def diffs_to_commands(diffs: list[git.Diff]) -> list[Command]:
         for diff in diffs:
             match diff.change_type:
                 case "A":
-                    yield Added(diff.b_path)
+                    yield Added(cast(str, diff.b_path))
                 case "D":
-                    yield Deleted(diff.a_path)
+                    yield Deleted(cast(str, diff.a_path))
                 case "M":
-                    yield Modified(diff.a_path)
+                    yield Modified(cast(str, diff.a_path))
                 case "R":
-                    yield Renamed(diff.rename_from, diff.rename_to)
+                    yield Renamed(
+                        cast(str, diff.rename_from), cast(str, diff.rename_to)
+                    )
                 case _:
-                    raise RuntimeError(diff.change_type)
+                    raise RuntimeError(cast(str, diff.change_type))
 
     return list(_convert())
 
 
-def collect(files: set[File], command: Command):
+def collect(files: set[str], command: Command) -> set[str]:
     new_files = files.copy()
     match command:
         case Added(name):
@@ -73,7 +69,7 @@ def collect(files: set[File], command: Command):
     return new_files
 
 
-def track(files: set[File], command: Command):
+def track(files: set[str], command: Command) -> set[str]:
     new_files = files.copy()
     match command:
         case Deleted(name):
@@ -102,11 +98,11 @@ def main():
 
     for command in collect_commands:
         files = collect(files, command)
-        rich.print(files)
+        print(files)
 
     for command in track_commands:
         files = track(files, command)
-        rich.print(files)
+        print(files)
 
 
 if __name__ == "__main__":
