@@ -84,7 +84,10 @@ class Week:
         )
 
     def _as_date(self) -> datetime.date:
-        return datetime.date.fromisocalendar(self.year, self.week, 1)
+        date = datetime.date.fromisocalendar(self.year, self.week, 1)
+        if self.week_starts_sunday:
+            return prev_day(date)
+        return date
 
     @property
     def days(self):
